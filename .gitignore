@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+backend/.next/
+frontend/.next/
+*.log
+.DS_Store
+.vscode/
+.idea/

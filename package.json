@@ -1,0 +1,14 @@
+{
+  "name": "lead-capture-agent",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "db:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-db.ps1",
+    "dev": "powershell -ExecutionPolicy Bypass -Command \"Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''%cd%''; npm run dev:backend'; Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''%cd%''; npm run dev:frontend'\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start:backend": "npm --prefix backend start",
+    "start:frontend": "npm --prefix frontend start"
+  }
+}

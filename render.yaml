@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: lead-capture-agent-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run migrate
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://replace-with-your-vercel-url.vercel.app
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lead-capture-agent-db
+          property: connectionString
+      - key: PGSSL
+        value: "false"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.5
+      - key: AI_QUALIFICATION_MODE
+        value: fallback
+
+databases:
+  - name: lead-capture-agent-db
+    plan: free
+    databaseName: lead_capture_agent
+    user: lead_capture_agent_user
