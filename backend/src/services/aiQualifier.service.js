@@ -1,10 +1,11 @@
-const DEFAULT_MODEL = 'gpt-5.5';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 function buildInstructions() {
   return [
     'You are a B2B sales development assistant for Oplify Solutions.',
     'Qualify inbound website leads for a software and AI automation services business.',
-    'Return only valid JSON with these exact keys: score, reason, emailDraft.',
+    'You MUST return your response as a valid JSON object.',
+    'Return ONLY valid JSON with these exact keys: score, reason, emailDraft.',
     'score must be one of: Hot, Warm, Cold.',
     'reason must be one concise sentence explaining the score.',
     'emailDraft must be a polished first-response email addressed to the lead by first name.',
@@ -24,20 +25,13 @@ function buildInput(lead) {
 }
 
 function extractOutputText(responsePayload) {
-  if (typeof responsePayload.output_text === 'string') {
-    return responsePayload.output_text;
+  // Handle the standard OpenAI/Gemini chat completion data structure
+  if (responsePayload?.choices?.[0]?.message?.content) {
+    return responsePayload.choices[0].message.content;
   }
-
-  if (!Array.isArray(responsePayload.output)) {
-    return '';
-  }
-
-  return responsePayload.output
-    .flatMap((item) => (Array.isArray(item.content) ? item.content : []))
-    .filter((content) => content.type === 'output_text' && typeof content.text === 'string')
-    .map((content) => content.text)
-    .join('\n')
-    .trim();
+  
+  // Fallback for unexpected object structure
+  return '';
 }
 
 function getFirstName(fullName) {
@@ -124,7 +118,7 @@ function parseJsonOutput(outputText) {
     return JSON.parse(objectMatch[0]);
   }
 
-  throw new Error('AI response did not contain JSON.');
+  throw new Error(`AI response did not contain JSON. Raw text received: ${outputText}`);
 }
 
 async function callOpenAI(lead) {
@@ -143,8 +137,18 @@ async function callOpenAI(lead) {
     },
     body: JSON.stringify({
       model,
-      instructions: buildInstructions(),
-      input: buildInput(lead),
+      messages: [
+        {
+          role: 'system',
+          content: buildInstructions()
+        },
+        {
+          role: 'user',
+          content: `Here is the lead to qualify:\n${buildInput(lead)}`
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.2
     }),
   });
 
@@ -169,7 +173,7 @@ async function qualifyLead(lead) {
   try {
     return await callOpenAI(lead);
   } catch (err) {
-    console.error('AI qualification fell back:', err.message);
+    console.error('AI qualification fell back due to error:', err);
     return fallbackQualification(lead, 'AI API fallback used');
   }
 }
