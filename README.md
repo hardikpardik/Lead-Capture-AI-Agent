@@ -70,6 +70,7 @@ PGSSL=false
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_MODEL=gpt-5.5
 AI_QUALIFICATION_MODE=
+ADMIN_TOKEN=
 ```
 
 Create `frontend/.env.local` from `frontend/.env.local.example`.
@@ -112,6 +113,7 @@ npm run dev
 - `CORS_ORIGIN`: frontend origin allowed to call the API.
 - `DATABASE_URL`: PostgreSQL connection string.
 - `PGSSL`: set to `true` for hosted Postgres providers that require SSL.
+- `ADMIN_TOKEN`: protects `GET /leads` and `GET /leads/stats` when set.
 - `OPENAI_API_KEY`: enables real AI qualification.
 - `OPENAI_MODEL`: model used by the qualifier. Defaults to `gpt-5.5`.
 - `AI_QUALIFICATION_MODE`: set to `fallback` to force the deterministic local qualifier.
@@ -194,12 +196,15 @@ NODE_ENV=production
 DATABASE_URL=<Render Postgres internal database URL>
 PGSSL=false
 CORS_ORIGIN=https://your-vercel-project.vercel.app
+ADMIN_TOKEN=<make-a-long-random-admin-password>
 OPENAI_API_KEY=<optional for real AI scoring>
 OPENAI_MODEL=gpt-5.5
 AI_QUALIFICATION_MODE=fallback
 ```
 
 Use `AI_QUALIFICATION_MODE=fallback` if you do not want to spend API credits. Remove the value if you add a real `OPENAI_API_KEY`.
+
+Do not commit `.env`, `.env.local`, API keys, database passwords, or `ADMIN_TOKEN`. The `.gitignore` already excludes those local files.
 
 ### Vercel: frontend
 
@@ -221,3 +226,5 @@ Final hosted URLs:
 - Frontend: `https://your-vercel-project.vercel.app`
 - Admin panel: `https://your-vercel-project.vercel.app/admin`
 - Backend health check: `https://your-render-api.onrender.com/health`
+
+When `ADMIN_TOKEN` is set on Render, enter the same token in the admin page token field to view leads.

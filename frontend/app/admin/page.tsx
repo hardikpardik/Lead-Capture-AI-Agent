@@ -31,6 +31,7 @@ function formatDate(value: string) {
 export default function AdminPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<LeadStats>(emptyStats);
+  const [adminToken, setAdminToken] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -42,7 +43,7 @@ export default function AdminPage() {
       setError('');
 
       try {
-        const [leadData, statsData] = await Promise.all([fetchLeads(), fetchLeadStats()]);
+        const [leadData, statsData] = await Promise.all([fetchLeads(adminToken), fetchLeadStats(adminToken)]);
         if (isMounted) {
           setLeads(leadData);
           setStats(statsData);
@@ -60,7 +61,7 @@ export default function AdminPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [adminToken]);
 
   const scoreBars = useMemo(
     () => [
@@ -89,6 +90,22 @@ export default function AdminPage() {
             Capture form
           </Link>
         </header>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <label htmlFor="adminToken" className="text-sm font-medium text-slate-800">
+            Admin token
+          </label>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <input
+              id="adminToken"
+              type="password"
+              value={adminToken}
+              onChange={(event) => setAdminToken(event.target.value)}
+              placeholder="Leave blank for local dev, enter Render ADMIN_TOKEN in production"
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+        </section>
 
         {error && (
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

@@ -48,13 +48,23 @@ export async function submitLead(values: LeadFormSchema): Promise<ApiResponse<Le
   });
 }
 
-export async function fetchLeads(): Promise<Lead[]> {
-  const payload = await request<Lead[]>('/leads', { cache: 'no-store' });
+function adminHeaders(adminToken?: string): HeadersInit {
+  return adminToken ? { 'x-admin-token': adminToken } : {};
+}
+
+export async function fetchLeads(adminToken?: string): Promise<Lead[]> {
+  const payload = await request<Lead[]>('/leads', {
+    cache: 'no-store',
+    headers: adminHeaders(adminToken),
+  });
   return payload.data || [];
 }
 
-export async function fetchLeadStats(): Promise<LeadStats> {
-  const payload = await request<LeadStats>('/leads/stats', { cache: 'no-store' });
+export async function fetchLeadStats(adminToken?: string): Promise<LeadStats> {
+  const payload = await request<LeadStats>('/leads/stats', {
+    cache: 'no-store',
+    headers: adminHeaders(adminToken),
+  });
   return payload.data || {
     total: 0,
     hot: 0,
