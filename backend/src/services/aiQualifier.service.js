@@ -135,7 +135,7 @@ async function callOpenAI(lead) {
     return fallbackQualification(lead, 'No OPENAI_API_KEY configured');
   }
 
-  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {    
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -149,8 +149,9 @@ async function callOpenAI(lead) {
   });
 
   if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`OpenAI qualification failed with ${response.status}: ${body.slice(0, 300)}`);
+    const errorDetails = await response.text();
+    console.error("google gemini error:", response.status, errorDetails);
+    throw new Error(`google api error ${response.status}: ${errorDetails}`);
   }
 
   const payload = await response.json();
