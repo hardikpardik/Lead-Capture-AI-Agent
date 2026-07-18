@@ -2,21 +2,35 @@
 
 Full-stack engineering assignment for Oplify Solutions. The app captures inbound leads, stores them in PostgreSQL, qualifies them with AI, drafts a first-response email, and shows the results in a simple admin panel.
 
+## Live Deployment
+
+- **Frontend (Vercel):** https://your-vercel-project.vercel.app
+- **Admin Command Center:** https://your-vercel-project.vercel.app/admin
+- **Backend API (Render):** https://your-render-api.onrender.com/health
+
+*(Note: If the Render database or API is asleep due to inactivity on the free tier, allow 30–60 seconds for the initial cold start).*
+
+## Demo Walkthrough
+
+[Click here to watch the 60-second demo walkthrough](./assets/demo.mp4)
+
 ## Features
 
 - Responsive lead capture form built with Next.js, React Hook Form, Zod, and Tailwind CSS.
-- Express REST API with centralized validation and error handling.
+- Express REST API with centralized validation, explicit UTF-8 character encoding, and structured error handling.
 - PostgreSQL persistence with a checked `Hot`, `Warm`, or `Cold` AI score.
-- OpenAI Responses API integration for lead qualification and first-response drafting.
-- Admin panel at `/admin` with lead list, score indicators, email drafts, and score distribution.
-- Bonus feature: smart duplicate detection blocks repeat submissions from the same email within 30 days.
+- Google Gemini 2.5 Flash integration using structured JSON output for lead qualification and first-response drafting.
+- Admin panel at `/admin` protected by a decryption token, featuring lead lists, score indicators, email drafts, and score distribution.
+- One-click workflow allowing agents to copy AI-generated email drafts directly to their clipboard.
+- Built-in rate-limiting to prevent API abuse and endpoint flooding.
+- Smart duplicate detection blocks repeat submissions from the same email within 30 days (returning `409 Conflict`).
 - Local fallback qualification mode so reviewers can demo the flow even without an API key.
 
 ## Tech Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS, React Hook Form, Zod
 - Backend: Node.js, Express, PostgreSQL, Zod
-- AI: OpenAI Responses API
+- AI: Google Gemini API (`gemini-2.5-flash`)
 
 ## Folder Structure
 
@@ -67,8 +81,8 @@ PORT=4000
 CORS_ORIGIN=http://localhost:3000
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/lead_capture_agent
 PGSSL=false
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_MODEL=gpt-5.5
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.5-flash
 AI_QUALIFICATION_MODE=
 ADMIN_TOKEN=
 ```
@@ -100,9 +114,9 @@ npm run dev
 
 ## API Endpoints
 
-- `POST /leads` validates, duplicate-checks, saves, qualifies, and returns the lead.
-- `GET /leads` lists recent leads for the admin panel.
-- `GET /leads/stats` returns dashboard counts.
+- `POST /leads` validates, duplicate-checks, applies rate-limits, saves, qualifies via Gemini 2.5 Flash, and returns the lead.
+- `GET /leads` lists recent leads for the admin panel (requires `ADMIN_TOKEN` when configured).
+- `GET /leads/stats` returns dashboard counts and score distribution.
 - `GET /health` returns API health.
 
 ## Environment Variables
@@ -114,8 +128,8 @@ npm run dev
 - `DATABASE_URL`: PostgreSQL connection string.
 - `PGSSL`: set to `true` for hosted Postgres providers that require SSL.
 - `ADMIN_TOKEN`: protects `GET /leads` and `GET /leads/stats` when set.
-- `OPENAI_API_KEY`: enables real AI qualification.
-- `OPENAI_MODEL`: model used by the qualifier. Defaults to `gpt-5.5`.
+- `GEMINI_API_KEY`: enables real AI qualification via Google AI Studio.
+- `GEMINI_MODEL`: model used by the qualifier. Defaults to `gemini-2.5-flash`.
 - `AI_QUALIFICATION_MODE`: set to `fallback` to force the deterministic local qualifier.
 
 ### Frontend
@@ -124,42 +138,44 @@ npm run dev
 
 ## My AI orchestration decisions
 
-I chose OpenAI's Responses API because the official OpenAI docs position it as the recommended API for text generation work, especially for current reasoning models. The model is configurable through `OPENAI_MODEL`, with `gpt-5.5` as the default because the current docs use it in Responses API examples and it is strong enough to produce reliable structured qualification output.
+I chose Google's Gemini 2.5 Flash API because it provides industry-leading reasoning speed, low latency, and native support for strict structured JSON output. The model is configurable through `GEMINI_MODEL`, with `gemini-2.5-flash` as the default because it is fast and reliable for structured qualification tasks.
 
 Prompt structure:
 
-- The system-style `instructions` tell the model it is a B2B sales development assistant for Oplify.
+- The system instructions tell the model it is a B2B sales development assistant for Oplify.
 - The lead is passed as JSON with `fullName`, `email`, `businessName`, and `message`.
-- The model is required to return only JSON with `score`, `reason`, and `emailDraft`.
+- The model is required via schema-enforced generation to return only JSON with `score`, `reason`, and `emailDraft`.
 - The scoring rubric is explicit: urgent business problem, budget, timeline, demo, quote, or implementation signals push toward `Hot`; unclear but plausible needs are `Warm`; vague or non-commercial submissions are `Cold`.
 
 Tradeoffs considered:
 
 - I kept the prompt compact to reduce latency and token usage.
+- I implemented an aggressive backend sanitization layer (`/[^\x00-\x7F]/g`) to ensure clean UTF-8 character encoding across different SQL collation settings.
 - I used a strict post-processing layer in code so an unexpected model response cannot break the database contract.
 - I added a deterministic fallback path. In production I would alert on fallback usage, but for this assignment it keeps the form, API, database, and admin demo working when no API key is available.
 
 ## AI tools I used and how
 
 - Claude was used earlier to draft the Task 1 foundation and folder structure.
-- Codex was used to review the assignment PDFs, audit the existing repo, identify missing Task 2 and Task 3 requirements, implement the AI qualifier, admin panel, duplicate detection, schema expansion, and README.
+- Codex / Gemini was used to review the assignment PDFs, audit the existing repo, identify missing Task 2 and Task 3 requirements, implement the Gemini 2.5 Flash qualifier, admin panel, duplicate detection, rate-limiting, schema expansion, and README.
 - I used AI as a reviewer and implementation partner, not only autocomplete: it helped compare the current code against the assignment rubric, decide what to keep, and tighten the product flow for the demo.
 
 ## Bonus Feature
 
 The bonus feature is smart duplicate detection. Before saving a new lead, the API checks whether the same email has submitted a lead in the last 30 days. If it finds one, the API returns `409 Conflict` with a field-level email error. This protects the sales queue from repeated submissions while still allowing old leads to come back later.
 
-The admin panel also includes a lightweight score distribution dashboard so a business owner can quickly see whether the pipeline is mostly Hot, Warm, or Cold.
+The app also includes custom API rate-limiting to prevent endpoint flooding, and the admin panel includes a lightweight score distribution dashboard so a business owner can quickly see whether the pipeline is mostly Hot, Warm, or Cold.
 
 ## Demo Walkthrough Checklist
 
-For the Loom recording:
+For the screen recording:
 
 1. Submit a lead from `http://localhost:3000`.
 2. Show the returned AI score, reason, and generated email draft on the confirmation panel.
 3. Open `http://localhost:3000/admin`.
-4. Show the saved lead in the admin list with the same score and draft.
-5. Open PostgreSQL and run:
+4. Enter the admin decryption token to authenticate and view the secure dashboard.
+5. Show the saved lead in the admin list with the same score and draft, and click the copy button to copy the draft to your clipboard.
+6. Open PostgreSQL and run:
 
 ```sql
 SELECT full_name, email, business_name, ai_score, ai_score_reason, ai_email_draft
@@ -168,7 +184,7 @@ ORDER BY created_at DESC
 LIMIT 5;
 ```
 
-6. Try submitting the same email again to show duplicate detection.
+7. Try submitting the same email again to show duplicate detection.
 
 ## Deploying On Free Tiers
 
@@ -193,16 +209,16 @@ Render docs currently support free web services and free Render Postgres, but fr
 
 ```text
 NODE_ENV=production
-DATABASE_URL=<Render Postgres internal database URL>
-PGSSL=false
-CORS_ORIGIN=https://your-vercel-project.vercel.app
+DATABASE_URL=<Render Postgres URL database internal>
+PGSSL=true
+CORS_ORIGIN=[https://your-vercel-project.vercel.app](https://your-vercel-project.vercel.app)
 ADMIN_TOKEN=<make-a-long-random-admin-password>
-OPENAI_API_KEY=<optional for real AI scoring>
-OPENAI_MODEL=gpt-5.5
+GEMINI_API_KEY=<your_gemini_api_key>
+GEMINI_MODEL=gemini-2.5-flash
 AI_QUALIFICATION_MODE=fallback
 ```
 
-Use `AI_QUALIFICATION_MODE=fallback` if you do not want to spend API credits. Remove the value if you add a real `OPENAI_API_KEY`.
+Use `AI_QUALIFICATION_MODE=fallback` if you do not want to spend API credits. Remove the value if you add a real `GEMINI_API_KEY`.
 
 Do not commit `.env`, `.env.local`, API keys, database passwords, or `ADMIN_TOKEN`. The `.gitignore` already excludes those local files.
 
@@ -214,7 +230,7 @@ Do not commit `.env`, `.env.local`, API keys, database passwords, or `ADMIN_TOKE
 4. Add this environment variable:
 
 ```text
-NEXT_PUBLIC_API_URL=https://your-render-api.onrender.com
+NEXT_PUBLIC_API_URL=[https://your-render-api.onrender.com](https://your-render-api.onrender.com)
 ```
 
 5. Deploy.
