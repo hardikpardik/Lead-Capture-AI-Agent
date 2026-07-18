@@ -25,7 +25,7 @@ function buildInput(lead) {
 }
 
 function extractOutputText(responsePayload) {
-  // Handle the standard OpenAI/Gemini chat completion data structure
+  // Gemini's OpenAI-compatible endpoint returns a chat-completions shape.
   if (responsePayload?.choices?.[0]?.message?.content) {
     return responsePayload.choices[0].message.content;
   }
@@ -121,12 +121,12 @@ function parseJsonOutput(outputText) {
   throw new Error(`AI response did not contain JSON. Raw text received: ${outputText}`);
 }
 
-async function callOpenAI(lead) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
+async function callGemini(lead) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+  const model = process.env.GEMINI_MODEL || process.env.OPENAI_MODEL || DEFAULT_MODEL;
 
   if (!apiKey) {
-    return fallbackQualification(lead, 'No OPENAI_API_KEY configured');
+    return fallbackQualification(lead, 'No GEMINI_API_KEY configured');
   }
 
   const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {    
@@ -154,8 +154,8 @@ async function callOpenAI(lead) {
 
   if (!response.ok) {
     const errorDetails = await response.text();
-    console.error("google gemini error:", response.status, errorDetails);
-    throw new Error(`google api error ${response.status}: ${errorDetails}`);
+    console.error('Gemini API error:', response.status, errorDetails);
+    throw new Error(`Gemini API error ${response.status}: ${errorDetails}`);
   }
 
   const payload = await response.json();
@@ -171,7 +171,7 @@ async function qualifyLead(lead) {
   }
 
   try {
-    return await callOpenAI(lead);
+    return await callGemini(lead);
   } catch (err) {
     console.error('AI qualification fell back due to error:', err);
     return fallbackQualification(lead, 'AI API fallback used');

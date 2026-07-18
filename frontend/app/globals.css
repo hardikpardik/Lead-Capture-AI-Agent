@@ -10,7 +10,7 @@ color-scheme: dark;
 --glass-border: rgba(0, 243, 255, 0.2);
 }
 
-{
+*{
 box-sizing: border-box;
 }
 

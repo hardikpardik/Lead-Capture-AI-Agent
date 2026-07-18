@@ -20,7 +20,7 @@ function fieldClasses(hasError: boolean) {
     'mt-2 w-full rounded-md border bg-black/50 px-3 py-3 text-sm text-white shadow-sm transition-all duration-300 font-mono backdrop-blur-sm',
     'placeholder:text-gray-600 focus:outline-none focus:ring-1',
     hasError 
-      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+      ? 'border-[#ff003c] focus:border-[#ff003c] focus:ring-[#ff003c]/30 shadow-[0_0_15px_rgba(255,0,60,0.15)] bg-[#ff003c]/5 text-[#ff003c]' 
       : 'border-[#00f3ff]/30 focus:border-[#00f3ff] focus:ring-[#00f3ff]/20 focus:shadow-[0_0_15px_rgba(0,243,255,0.15)] focus:bg-[#00f3ff]/5',
   ].join(' ');
 }
@@ -47,7 +47,14 @@ export default function LeadCaptureForm() {
         setQualifiedLead(result.data);
       }
       toast.success(result.message || 'Transmission intercepted and analyzed.', {
-        style: { background: '#0a0f14', color: '#00f3ff', border: '1px solid #00f3ff' }
+        style: { 
+          background: '#0a0f14', 
+          color: '#00ff9d', 
+          border: '1px solid #00ff9d',
+          boxShadow: '0 0 20px rgba(0, 255, 157, 0.2)',
+          fontFamily: 'monospace'
+        },
+        iconTheme: { primary: '#00ff9d', secondary: '#0a0f14' }
       });
       reset();
     } catch (err: unknown) {
@@ -62,7 +69,14 @@ export default function LeadCaptureForm() {
       }
 
       toast.error(error.message || 'Signal lost. Could not submit lead.', {
-        style: { background: '#1a0505', color: '#ff003c', border: '1px solid #ff003c' }
+        style: { 
+          background: '#1a0505', 
+          color: '#ff003c', 
+          border: '1px solid #ff003c',
+          boxShadow: '0 0 20px rgba(255, 0, 60, 0.2)',
+          fontFamily: 'monospace'
+        },
+        iconTheme: { primary: '#ff003c', secondary: '#1a0505' }
       });
     }
   }
@@ -134,18 +148,18 @@ export default function LeadCaptureForm() {
             placeholder="We need to automate our defense grid immediately..."
             {...register('message')}
           />
-          {errors.message && <p className="mt-1.5 text-xs font-mono text-red-400">{errors.message.message}</p>}
+          {errors.message && <p className="mt-2 text-xs font-mono font-bold text-[#ff003c] bg-[#ff003c]/10 py-1 px-2 rounded inline-block border border-[#ff003c]/30">{errors.message.message}</p>}
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-6 w-full rounded-md border border-[#00f3ff] bg-[#00f3ff]/10 px-4 py-4 text-sm font-mono font-semibold uppercase tracking-widest text-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.1)] transition-all hover:bg-[#00f3ff]/20 hover:shadow-[0_0_25px_rgba(0,243,255,0.3)] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
+          className="mt-6 w-full rounded-md border border-[#00f3ff] bg-[#00f3ff]/10 px-4 py-4 text-sm font-mono font-semibold uppercase tracking-widest text-[#00f3ff] shadow-[0_0_15px_rgba(0,243,255,0.1)] transition-all hover:bg-[#00f3ff]/20 hover:shadow-[0_0_25px_rgba(0,243,255,0.3)] disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-900 disabled:text-slate-500 disabled:shadow-none flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
-              <div className="h-4 w-4 rounded-full border-2 border-[#00f3ff] border-t-transparent animate-spin"></div>
-              Processing Neural Weights...
+              <div className="h-4 w-4 rounded-full border-2 border-slate-500 border-t-transparent animate-spin"></div>
+              Processing...
             </>
           ) : (
             'Execute Analysis'
