@@ -2,9 +2,6 @@
 
 Full-stack engineering assignment for Oplify Solutions. The app captures inbound leads, stores them in PostgreSQL, qualifies them with AI, drafts a first-response email, and shows the results in a simple admin panel.
 
-### Demo Walkthrough
-<video src="./assets/demo.mp4" controls="controls" style="max-width: 730px;"></video>
-
 ## Features
 
 - Responsive lead capture form built with Next.js, React Hook Form, Zod, and Tailwind CSS.
