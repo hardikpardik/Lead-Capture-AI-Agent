@@ -4,9 +4,8 @@ Full-stack engineering assignment for Oplify Solutions. The app captures inbound
 
 ## Live Deployment
 
-- **Frontend (Vercel):** https://your-vercel-project.vercel.app
-- **Admin Command Center:** https://your-vercel-project.vercel.app/admin
-- **Backend API (Render):** https://your-render-api.onrender.com/health
+- **Frontend (Vercel):** https://lead-capture-ai-agent.vercel.app/
+- **Admin Command Center:** https://lead-capture-ai-agent.vercel.app/admin
 
 *(Note: If the Render database or API is asleep due to inactivity on the free tier, allow 30–60 seconds for the initial cold start).*
 
