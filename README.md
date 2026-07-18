@@ -2,8 +2,8 @@
 
 Full-stack engineering assignment for Oplify Solutions. The app captures inbound leads, stores them in PostgreSQL, qualifies them with AI, drafts a first-response email, and shows the results in a simple admin panel.
 
-### demo
-/assets/demo.mp4
+### Demo Walkthrough
+(./assets/demo.mp4)
 
 ## Features
 
