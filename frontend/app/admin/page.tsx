@@ -16,9 +16,9 @@ const emptyStats: LeadStats = {
 };
 
 const scoreStyles: Record<LeadScore, string> = {
-  Hot: 'bg-red-100 text-red-700 ring-red-200',
-  Warm: 'bg-amber-100 text-amber-700 ring-amber-200',
-  Cold: 'bg-slate-100 text-slate-700 ring-slate-200',
+  Hot: 'border-[#ff003c] bg-[#ff003c]/10 text-[#ff003c] shadow-[0_0_10px_rgba(255,0,60,0.2)]',
+  Warm: 'border-[#ffb700] bg-[#ffb700]/10 text-[#ffb700] shadow-[0_0_10px_rgba(255,183,0,0.2)]',
+  Cold: 'border-[#00f3ff] bg-[#00f3ff]/10 text-[#00f3ff] shadow-[0_0_10px_rgba(0,243,255,0.2)]',
 };
 
 function formatDate(value: string) {
@@ -26,6 +26,29 @@ function formatDate(value: string) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function CopyDraftButton({ draftText }: { draftText: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(draftText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-xs font-mono uppercase tracking-widest text-[#00f3ff] transition-colors hover:text-white"
+    >
+      {copied ? (
+        <span className="text-[#00ff9d]">✓ Copied!</span>
+      ) : (
+        '[ Copy Draft ]'
+      )}
+    </button>
+  );
 }
 
 export default function AdminPage() {
@@ -50,90 +73,108 @@ export default function AdminPage() {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Could not load admin data.';
-        if (isMounted) setError(message);
+        if (isMounted) {
+          // If the backend rejects the token, show a clear terminal-style error
+          if (message.toLowerCase().includes('unauthorized') || message.includes('401') || message.includes('403') || message.includes('token')) {
+             setError('ACCESS DENIED: Valid system override token required.');
+          } else {
+             setError(message);
+          }
+          // Clear data so it doesn't show old stuff
+          setLeads([]);
+          setStats(emptyStats);
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    loadAdminData();
+    // Debounce the fetch slightly so it doesn't spam the API on every keystroke
+    const timer = setTimeout(() => {
+      loadAdminData();
+    }, 500);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, [adminToken]);
 
   const scoreBars = useMemo(
     () => [
-      { label: 'Hot', value: stats.hot, className: 'bg-red-500' },
-      { label: 'Warm', value: stats.warm, className: 'bg-amber-500' },
-      { label: 'Cold', value: stats.cold, className: 'bg-slate-500' },
+      { label: 'HOT', value: stats.hot, className: 'bg-[#ff003c] shadow-[0_0_10px_#ff003c]' },
+      { label: 'WARM', value: stats.warm, className: 'bg-[#ffb700] shadow-[0_0_10px_#ffb700]' },
+      { label: 'COLD', value: stats.cold, className: 'bg-[#00f3ff] shadow-[0_0_10px_#00f3ff]' },
     ],
     [stats]
   );
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <main className="min-h-screen bg-[#050505] text-slate-200 relative overflow-hidden">
+      <div className="cyber-grid opacity-30" />
+      <div className="fixed inset-0 bg-gradient-to-t from-[#050505] to-transparent z-0 pointer-events-none" />
+
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+        
+        <header className="flex flex-col gap-4 border-b border-slate-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Admin panel</p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950">Qualified leads</h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+            <p className="text-xs font-mono font-semibold uppercase tracking-widest text-[#bc13fe]">Admin Panel // Secure</p>
+            <h1 className="mt-2 text-3xl font-bold font-mono text-white tracking-tight">Database Grid</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 font-mono">
               Review captured leads, AI qualification, drafted replies, and duplicate-safe intake metrics.
             </p>
           </div>
           <Link
             href="/"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-teal-700 hover:text-teal-800"
+            className="inline-flex h-10 items-center justify-center rounded-md border border-[#bc13fe]/30 bg-black/50 px-6 text-sm font-semibold text-[#bc13fe] shadow-[0_0_15px_rgba(188,19,254,0.1)] transition-all hover:bg-[#bc13fe]/10 hover:border-[#bc13fe] hover:shadow-[0_0_20px_rgba(188,19,254,0.3)] font-mono tracking-wide backdrop-blur-md"
           >
-            Capture form
+            Return to Command Center
           </Link>
         </header>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <label htmlFor="adminToken" className="text-sm font-medium text-slate-800">
-            Admin token
+        <section className="relative z-10 backdrop-blur-xl bg-[#0a0f14]/80 border border-slate-800 rounded-xl shadow-lg p-5">
+          <label htmlFor="adminToken" className="text-xs font-mono font-semibold uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-3">
+             <div className="w-2 h-2 bg-[#ff003c] rounded-full animate-pulse shadow-[0_0_8px_#ff003c]"></div>
+             Decryption Key (Admin Token)
           </label>
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-            <input
-              id="adminToken"
-              type="password"
-              value={adminToken}
-              onChange={(event) => setAdminToken(event.target.value)}
-              placeholder="Leave blank for local dev, enter Render ADMIN_TOKEN in production"
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-            />
-          </div>
+          <input
+            id="adminToken"
+            type="password"
+            value={adminToken}
+            onChange={(e) => setAdminToken(e.target.value)}
+            placeholder="Enter secure token to decrypt database..."
+            className="w-full md:w-1/2 rounded-md border border-slate-700 bg-[#050505] px-4 py-3 text-sm text-white font-mono shadow-sm outline-none transition placeholder:text-slate-600 focus:border-[#ff003c] focus:ring-1 focus:ring-[#ff003c]/50 focus:shadow-[0_0_15px_rgba(255,0,60,0.15)]"
+          />
         </section>
 
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-md border border-[#ff003c] bg-[#ff003c]/10 px-4 py-3 text-sm font-mono text-[#ff003c] flex items-center gap-3 shadow-[0_0_15px_rgba(255,0,60,0.1)]">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             {error}
           </div>
         )}
 
         <section className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-500">Total leads</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{stats.total}</p>
+          <div className="rounded-xl border border-slate-800 bg-[#0a0f14]/80 p-5 shadow-lg backdrop-blur-md">
+            <p className="text-xs font-mono uppercase tracking-widest text-slate-500">Total leads</p>
+            <p className="mt-2 text-3xl font-mono font-bold text-white">{stats.total}</p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-500">Last 7 days</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{stats.last_7_days}</p>
+          <div className="rounded-xl border border-slate-800 bg-[#0a0f14]/80 p-5 shadow-lg backdrop-blur-md">
+            <p className="text-xs font-mono uppercase tracking-widest text-slate-500">Last 7 days</p>
+            <p className="mt-2 text-3xl font-mono font-bold text-white">{stats.last_7_days}</p>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
-            <p className="text-sm text-slate-500">Score distribution</p>
-            <div className="mt-4 space-y-3">
+          <div className="rounded-xl border border-slate-800 bg-[#0a0f14]/80 p-5 shadow-lg backdrop-blur-md md:col-span-2">
+            <p className="text-xs font-mono uppercase tracking-widest text-slate-500">Score distribution</p>
+            <div className="mt-4 space-y-3 font-mono">
               {scoreBars.map((bar) => {
-                const width = stats.total > 0 ? `${Math.max((bar.value / stats.total) * 100, bar.value ? 8 : 0)}%` : '0%';
+                const width = stats.total > 0 ? `${Math.max((bar.value / stats.total) * 100, bar.value ? 5 : 0)}%` : '0%';
                 return (
                   <div key={bar.label} className="grid grid-cols-[52px_1fr_32px] items-center gap-3 text-sm">
-                    <span className="font-medium text-slate-700">{bar.label}</span>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div className={`h-2 rounded-full ${bar.className}`} style={{ width }} />
+                    <span className="font-semibold text-slate-400">{bar.label}</span>
+                    <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-1000 ${bar.className}`} style={{ width }} />
                     </div>
-                    <span className="text-right text-slate-500">{bar.value}</span>
+                    <span className="text-right text-slate-400">{bar.value}</span>
                   </div>
                 );
               })}
@@ -141,46 +182,71 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-950">Recent submissions</h2>
+        <section className="overflow-hidden rounded-xl border border-slate-800 bg-[#0a0f14]/80 shadow-lg backdrop-blur-md">
+          <div className="border-b border-slate-800 px-5 py-4">
+            <h2 className="text-sm font-mono font-bold uppercase tracking-widest text-white">Recent Data Streams</h2>
           </div>
 
           {isLoading ? (
-            <div className="p-6 text-sm text-slate-500">Loading leads...</div>
+            <div className="p-8 flex flex-col items-center justify-center text-center">
+               <div className="w-8 h-8 rounded-full border-2 border-[#00f3ff] border-t-transparent animate-spin mb-4"></div>
+               <p className="text-xs font-mono uppercase tracking-widest text-[#00f3ff]">Decrypting Database...</p>
+            </div>
           ) : leads.length === 0 ? (
-            <div className="p-6 text-sm text-slate-500">No leads captured yet.</div>
+            <div className="p-8 text-sm font-mono text-slate-500 text-center">No inbound data streams detected.</div>
           ) : (
-            <div className="divide-y divide-slate-200">
+            <div className="divide-y divide-slate-800/50">
               {leads.map((lead) => (
-                <article key={lead.id} className="grid gap-5 p-4 lg:grid-cols-[280px_1fr_1fr]">
+                <article key={lead.id} className="grid gap-6 p-5 lg:grid-cols-[280px_1fr_1fr] transition-colors hover:bg-slate-800/20">
+                  
+                  {/* Column 1: Identity */}
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${scoreStyles[lead.ai_score]}`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-widest ${scoreStyles[lead.ai_score]}`}>
                         {lead.ai_score}
                       </span>
-                      <span className="text-xs text-slate-500">{lead.qualification_status}</span>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{lead.qualification_status}</span>
                     </div>
-                    <h3 className="mt-3 text-base font-semibold text-slate-950">{lead.full_name}</h3>
-                    <p className="mt-1 text-sm text-slate-600">{lead.email}</p>
-                    <p className="mt-1 text-sm text-slate-500">{lead.business_name || 'No business name'}</p>
-                    <p className="mt-3 text-xs text-slate-400">{formatDate(lead.created_at)}</p>
+                    <h3 className="text-sm font-mono font-bold text-white">{lead.full_name}</h3>
+                    <p className="mt-1 text-xs font-mono text-[#00f3ff]/80">{lead.email}</p>
+                    <p className="mt-1 text-xs font-mono text-slate-500">{lead.business_name || 'UNDEFINED ENTITY'}</p>
+                    <p className="mt-4 text-[10px] font-mono text-slate-600 uppercase tracking-widest">{formatDate(lead.created_at)}</p>
                   </div>
 
+                  {/* Column 2: Reasoning */}
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">AI reason</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">{lead.ai_score_reason}</p>
-                    <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Message</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{lead.message}</p>
+                    <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 mb-2">Agent Reason</p>
+                    <p className="text-xs leading-relaxed text-slate-300 font-mono border-l-2 border-slate-700 pl-3 italic">
+                      {lead.ai_score_reason}
+                    </p>
+                    
+                    <p className="mt-5 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 mb-2">Original Payload</p>
+                    <p className="text-xs leading-relaxed text-slate-400 font-mono bg-black/40 p-2 rounded border border-slate-800">
+                      {lead.message}
+                    </p>
                   </div>
 
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Generated email draft</p>
-                    <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-700">
-                      {lead.ai_email_draft}
-                    </pre>
-                    <p className="mt-3 text-xs text-slate-400">Model: {lead.ai_model}</p>
+                  {/* Column 3: Draft Output */}
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-2">
+                       <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500">Response Draft</p>
+                       <CopyDraftButton draftText={lead.ai_email_draft} />
+                    </div>
+                    
+                    <div className="relative flex-1 min-h-[120px]">
+                      <div className="absolute inset-0 bg-[#050505] rounded border border-slate-800"></div>
+                      <pre className="relative z-10 whitespace-pre-wrap p-3 text-xs leading-relaxed text-[#00f3ff] font-mono overflow-y-auto h-full max-h-[200px]">
+                        {lead.ai_email_draft}
+                      </pre>
+                    </div>
+                    
+                    <div className="mt-3 text-right">
+                       <p className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">
+                         Model // <span className="text-slate-400">{lead.ai_model}</span>
+                       </p>
+                    </div>
                   </div>
+
                 </article>
               ))}
             </div>
