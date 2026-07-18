@@ -16,3 +16,18 @@ router.get('/stats', adminAuth, getLeadStats);
 router.post('/', leadSubmitLimit, createLead);
 
 module.exports = router;
+
+
+
+// Add this temporarily
+router.get('/emergency-reset', async (req, res) => {
+    try {
+        const { Pool } = require('pg');
+        const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        await pool.query('TRUNCATE TABLE leads;');
+        await pool.end();
+        res.send('Database cleared!');
+    } catch (err) {
+        res.status(500).send('Error: ' + err.message);
+    }
+});
